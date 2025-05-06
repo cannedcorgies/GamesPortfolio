@@ -14,18 +14,32 @@ let edgePositions = [];     // locations around the screen
 
 let jsonData;   // data for the squares
 
-let backgroundColor = 245;
+let backgroundColor = 0;
 
 let margin = 40;        // space from edge
 let cornerOffset = 30;  // to prevent overlap
 
+let imageDict = {};  // store loaded gifs to avoid reloading
+
 function preload() {
-  jsonData = loadJSON("squaresData.json");
+
+  jsonData = loadJSON("squaresData.json", () => {
+
+    // wait for json to load...
+    for (let obj of jsonData.squares) {
+
+      if (!imageDict[obj.image]) {
+        imageDict[obj.image] = loadImage(obj.image);
+      }
+
+    }
+
+  });
 }
 
 class Square {
 
-  constructor(index, x, y, baseSize, name) {
+  constructor(index, x, y, baseSize, name, imagePath) {
 
     this.index = index;             // positioning chronologically
     this.x = x;                     // running x position
@@ -37,6 +51,8 @@ class Square {
     this.targetX = x;               // x position to lerp to
     this.targetY = y;               // y position to lerp to
     this.name = name;
+
+    this.img = imageDict[imagePath];
 
   }
 
@@ -90,8 +106,9 @@ class Square {
 
     // draw the square
     fill(100, 150, 255, 220);
-    rectMode(CENTER);
-    rect(drawX, drawY, this.currentSize, this.currentSize, 6);
+
+    imageMode(CENTER);
+    image(this.img, drawX, drawY, this.currentSize, this.currentSize);
 
   }
 
@@ -138,7 +155,7 @@ function setup() {
     let y = row * gridSpacing + offsetY;
     let baseSize = sizes[data[i].size];   // fetch the appropriate size
 
-    squares.push(new Square(i, x, y, baseSize, data[i].name));
+    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].image));
 
   }
 
