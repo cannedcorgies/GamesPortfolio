@@ -104,11 +104,28 @@ class Square {
     let targetSize = hovered ? this.baseSize * selectStretch : this.baseSize;
     this.currentSize = lerp(this.currentSize, targetSize, lerpSpeed);
 
-    // draw the square
-    fill(100, 150, 255, 220);
+    // center crop the image to fill square without squeezing
+    let cropSize = min(this.img.width, this.img.height);
+    let xOffset = (this.img.width - cropSize) / 2;
+    let yOffset = (this.img.height - cropSize) / 2;
 
+    // create a square crop of the original image
+    let cropped = this.img.get(xOffset, yOffset, cropSize, cropSize);
+    cropped.setFrame(this.img.getCurrentFrame());
+    cropped.resize(this.currentSize, this.currentSize); // Resize it to fit square box
+
+    // create a mask (rounded square)
+    let mask = createGraphics(this.currentSize, this.currentSize);
+    mask.noStroke();
+    mask.fill(255);
+    mask.rect(0, 0, this.currentSize, this.currentSize, this.currentSize * 0.2); // Rounded corners (30% radius)
+
+    // apply the mask
+    cropped.mask(mask);
+
+    image(this.img, 0, 0, 0, 0);
     imageMode(CENTER);
-    image(this.img, drawX, drawY, this.currentSize, this.currentSize);
+    image(cropped, drawX, drawY, this.currentSize, this.currentSize);
 
   }
 
