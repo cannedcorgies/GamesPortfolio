@@ -1,0 +1,9 @@
+{ "squares": [
+    { "name": "A", "size": "small" },
+    { "name": "B", "size": "medium" },
+    { "name": "C", "size": "large" },
+    { "name": "D", "size": "small" },
+    { "name": "E", "size": "small" },
+    { "name": "F", "size": "medium" }
+  ]
+}
