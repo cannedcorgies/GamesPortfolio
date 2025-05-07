@@ -29,6 +29,12 @@ let boxColor = 255;
 let gridBox;
 let widthSpacing = 100;
 
+let textBox;
+let textBoxLerpSpeed = 0.075;
+let textBoxOffsetX = 100;
+let textBoxOffsetY = 50;
+let textBoxMargin = 20;
+
 function preload() {
 
   jsonData = loadJSON("squaresData.json", () => {
@@ -43,6 +49,63 @@ function preload() {
     }
 
   });
+}
+
+class TextBox {
+
+  constructor(text, boxWidth, boxHeight, color = [255, 128, 128]) {
+
+    this.activated = false;
+    this.startX = width/2 - textBoxOffsetX * 2;
+    this.x = this.startX;
+    this.y = height/2 + textBoxOffsetY;
+    this.width = boxWidth;
+    this.height = boxHeight;
+    this.text = text;
+    this.color = color;
+    this.alpha = 0;
+
+  }
+
+  reset() {
+
+    this.alpha = 0;
+    this.x = width/2 - textBoxOffsetX * 2;
+
+  }
+
+  update() {
+
+    if (this.activated) {
+
+      this.alpha = lerp(this.alpha, 200, textBoxLerpSpeed);
+      this.x = lerp(this.x, width/2 - textBoxOffsetX, textBoxLerpSpeed);
+
+    } else {
+
+      this.x = this.startX;
+      this.alpha = 0;
+
+    }
+
+  }
+
+  display() {
+
+    rectMode(CENTER);
+    noStroke();
+    let c = color(this.color[0], this.color[1], this.color[2]);
+    c.setAlpha(this.alpha);
+    fill(c);
+    rect(this.x, this.y, this.width, this.height);
+
+    c = color(255, 255, 255);
+    c.setAlpha(this.alpha);
+    fill(c);
+    text(this.text, this.x, this.y, this.width - textBoxMargin);
+
+  }
+
 }
 
 class GridBox {
@@ -107,7 +170,7 @@ class GridBox {
 
 class Square {
 
-  constructor(index, x, y, baseSize, name, imagePath) {
+  constructor(index, x, y, baseSize, name, text, imagePath) {
 
     this.index = index;             // positioning chronologically
     this.x = x;                     // running x position
@@ -120,6 +183,7 @@ class Square {
     this.targetY = y;               // y position to lerp to
     this.name = name;
     this.currWidth = baseSize;
+    this.text = text;
 
     this.img = imageDict[imagePath];
     this.widthMultiplier = this.img.width/this.img.height;
@@ -162,6 +226,7 @@ class Square {
       // remap mouse position
     let shiftX = map(mouseX, 0, width, -10, 10);
     let shiftY = map(mouseY, 0, height, -10, 10);
+    if (selectedIndex == this.index) { shiftX = shiftY = 0; }
       // recalculate position based on mouse pos
     let drawX = this.x + shiftX * (this.baseSize / sizes.large);  // account for largest size possible
     let drawY = this.y + shiftY * (this.baseSize / sizes.large);
@@ -248,7 +313,8 @@ function setup() {
     let y = row * gridSpacing + offsetY;
     let baseSize = sizes[data[i].size];   // fetch the appropriate size
 
-    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].image));
+    console.log(data[i].text);
+    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image));
 
   }
 
@@ -262,6 +328,8 @@ function setup() {
     [squares[gridCols].x, squares[squares.length - 1].y], 
     [squares[0].x, squares[squares.length - 1].y])
 
+  textBox = new TextBox("hello blah blah blah", 500, 200);
+
 }
 
 function draw() {
@@ -270,9 +338,29 @@ function draw() {
   gridBox.update(selectedIndex);
   gridBox.display();
   // update all squares
-  for (let s of squares) {
-    s.update(selectedIndex);
-    s.display(selectedIndex);
+  for (i = 0; i < squares.length; i++) {
+
+    if (i === selectedIndex) { continue; }
+    squares[i].update(selectedIndex);
+    squares[i].display(selectedIndex);
+
+  }
+
+  // update textbox
+  textBox.update();
+  textBox.display();
+
+  // draw above everything
+  if (selectedIndex !== null) {
+
+    textBox.activated = true;
+    squares[selectedIndex].update(selectedIndex);
+    squares[selectedIndex].display(selectedIndex);
+
+  } else {
+
+    textBox.activated = false;
+
   }
   
 }
@@ -298,6 +386,8 @@ function mousePressed() {
 
       // otherwise, mark selected index and calculate edge positions
       selectedIndex = s.index;
+      textBox.reset();
+      textBox.text = s.text;
       return;
     }
   }
