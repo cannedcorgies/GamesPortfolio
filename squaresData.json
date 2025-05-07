@@ -4,6 +4,12 @@
     { "name": "C", "size": "large", "image": "images/sheep.gif" },
     { "name": "D", "size": "small", "image": "images/sheep.gif" },
     { "name": "E", "size": "small", "image": "images/sheep.gif" },
+    { "name": "F", "size": "medium", "image": "images/sheep.gif" },
+    { "name": "A", "size": "small", "image": "images/sheep.gif" },
+    { "name": "B", "size": "medium", "image": "images/sheep.gif" },
+    { "name": "C", "size": "large", "image": "images/sheep.gif" },
+    { "name": "D", "size": "small", "image": "images/sheep.gif" },
+    { "name": "E", "size": "small", "image": "images/sheep.gif" },
     { "name": "F", "size": "medium", "image": "images/sheep.gif" }
   ]
 }

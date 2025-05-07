@@ -8,6 +8,7 @@ let sizes = {
 };
 let selectStretch = 1.3;
 let lerpSpeed = 0.2;
+let openSize = 200;
 
 let selectedIndex = null;   // which square has been selected
 let edgePositions = [];     // locations around the screen
@@ -16,10 +17,17 @@ let jsonData;   // data for the squares
 
 let backgroundColor = 0;
 
-let margin = 40;        // space from edge
+let margin = 100;        // space from edge
 let cornerOffset = 30;  // to prevent overlap
 
 let imageDict = {};  // store loaded gifs to avoid reloading
+
+let centerOffset_x = 0;
+let centerOffset_y = -200;
+
+let boxColor = 255;
+let gridBox;
+let widthSpacing = 100;
 
 function preload() {
 
@@ -37,6 +45,66 @@ function preload() {
   });
 }
 
+class GridBox {
+
+  constructor(topLeft, topRight, bottomRight, bottomLeft) {
+
+    this.topLeftRest = topLeft;
+    this.topRightRest = topRight;
+    this.bottomRightRest = bottomRight;
+    this.bottomLeftRest = bottomLeft;
+
+    this.currTopLeft = [...this.topLeftRest];
+    this.currTopRight = [...this.topRightRest];
+    this.currBottomRight = [...this.bottomRightRest];
+    this.currBottomLeft = [...this.bottomLeftRest];
+
+  }
+
+  update(selectedIndex) {
+
+    if (selectedIndex !== null) {
+
+      this.currTopLeft[0] = lerp(this.currTopLeft[0], (width/2) - (openSize * squares[selectedIndex].widthMultiplier * 0.5) - widthSpacing, lerpSpeed)
+      this.currTopLeft[1] = lerp(this.currTopLeft[1], height / 2 + centerOffset_y, lerpSpeed);
+
+      this.currTopRight[0] = lerp(this.currTopRight[0], (width/2) + (openSize * squares[selectedIndex].widthMultiplier * 0.5) + widthSpacing, lerpSpeed)
+      this.currTopRight[1] = lerp(this.currTopRight[1], height / 2 + centerOffset_y, lerpSpeed);
+
+      this.currBottomRight[0] = lerp(this.currBottomRight[0], (width/2) + (openSize * squares[selectedIndex].widthMultiplier * 0.5) + widthSpacing, lerpSpeed)
+      this.currBottomRight[1] = lerp(this.currBottomRight[1], height / 2 - centerOffset_y, lerpSpeed);
+
+      this.currBottomLeft[0] = lerp(this.currBottomLeft[0], (width/2) - (openSize * squares[selectedIndex].widthMultiplier * 0.5) - widthSpacing, lerpSpeed)
+      this.currBottomLeft[1] = lerp(this.currBottomLeft[1], height / 2 - centerOffset_y, lerpSpeed);
+
+    } else {
+
+      this.currTopLeft[0] = lerp(this.currTopLeft[0], this.topLeftRest[0], lerpSpeed);
+      this.currTopLeft[1] = lerp(this.currTopLeft[1], this.topLeftRest[1], lerpSpeed);
+
+      this.currTopRight[0] = lerp(this.currTopRight[0], this.topRightRest[0], lerpSpeed);
+      this.currTopRight[1] = lerp(this.currTopRight[1], this.topRightRest[1], lerpSpeed);
+
+      this.currBottomRight[0] = lerp(this.currBottomRight[0], this.bottomRightRest[0], lerpSpeed);
+      this.currBottomRight[1] = lerp(this.currBottomRight[1], this.bottomRightRest[1], lerpSpeed);
+
+      this.currBottomLeft[0] = lerp(this.currBottomLeft[0], this.bottomLeftRest[0], lerpSpeed);
+      this.currBottomLeft[1] = lerp(this.currBottomLeft[1], this.bottomLeftRest[1], lerpSpeed);
+
+    }
+
+  }
+
+  display() {
+
+    noFill();
+    stroke(boxColor);
+    quad(this.currTopLeft[0], this.currTopLeft[1], this.currTopRight[0], this.currTopRight[1], this.currBottomRight[0], this.currBottomRight[1], this.currBottomLeft[0], this.currBottomLeft[1]);
+
+  }
+
+}
+
 class Square {
 
   constructor(index, x, y, baseSize, name, imagePath) {
@@ -51,8 +119,10 @@ class Square {
     this.targetX = x;               // x position to lerp to
     this.targetY = y;               // y position to lerp to
     this.name = name;
+    this.currWidth = baseSize;
 
     this.img = imageDict[imagePath];
+    this.widthMultiplier = this.img.width/this.img.height;
 
   }
 
@@ -66,7 +136,7 @@ class Square {
       if (this.index === selectedIndex) {
 
         this.targetX = width / 2;
-        this.targetY = height / 2;
+        this.targetY = height / 2 + centerOffset_y;
 
       } else {  // else, lerp to edge
         
@@ -86,7 +156,7 @@ class Square {
   }
 
   // update visuals
-  display() {
+  display(selectedIndex) {
 
     // lean towards map
       // remap mouse position
@@ -97,12 +167,16 @@ class Square {
     let drawY = this.y + shiftY * (this.baseSize / sizes.large);
 
     // hover detection
-    let hovered = abs(mouseX - drawX) < this.currentSize / 2 &&
+    let hovered = abs(mouseX - drawX) < this.currWidth / 2 &&
                   abs(mouseY - drawY) < this.currentSize / 2;
 
     // smooth size lerping
     let targetSize = hovered ? this.baseSize * selectStretch : this.baseSize;
+    if (selectedIndex === this.index) { targetSize = hovered ? openSize * selectStretch : openSize; }
     this.currentSize = lerp(this.currentSize, targetSize, lerpSpeed);
+
+    if (selectedIndex === this.index) { this.currWidth = lerp(this.currWidth, this.currentSize * this.widthMultiplier, lerpSpeed);}
+    else { this.currWidth = lerp(this.currWidth, this.currentSize, lerpSpeed); }
 
     // center crop the image to fill square without squeezing
     let cropSize = min(this.img.width, this.img.height);
@@ -111,21 +185,23 @@ class Square {
 
     // create a square crop of the original image
     let cropped = this.img.get(xOffset, yOffset, cropSize, cropSize);
+    if (selectedIndex === this.index) { cropped = this.img.get((this.img.width - cropSize * this.widthMultiplier) / 2, yOffset, cropSize * this.widthMultiplier, cropSize); }
     cropped.setFrame(this.img.getCurrentFrame());
-    cropped.resize(this.currentSize, this.currentSize); // Resize it to fit square box
+    cropped.resize(this.currentSize * this.widthMultiplier, this.currentSize);
 
     // create a mask (rounded square)
-    let mask = createGraphics(this.currentSize, this.currentSize);
+    let mask = createGraphics(this.currWidth, this.currentSize);
     mask.noStroke();
     mask.fill(255);
-    mask.rect(0, 0, this.currentSize, this.currentSize, this.currentSize * 0.2); // Rounded corners (30% radius)
+    mask.rect(0, 0, this.currWidth, this.currentSize, this.currentSize * 0.2); // Rounded corners (30% radius)
 
     // apply the mask
     cropped.mask(mask);
 
-    image(this.img, 0, 0, 0, 0);
     imageMode(CENTER);
-    image(cropped, drawX, drawY, this.currentSize, this.currentSize);
+    if (hovered || selectedIndex === this.index) { image(this.img, -1000, -1000, 0, 0); }    // source image
+    //if (selectedIndex === this.index)
+    image(cropped, drawX, drawY, this.currWidth, this.currentSize);
 
   }
 
@@ -137,7 +213,7 @@ class Square {
     let drawX = this.x + shiftX * (this.baseSize / sizes.large);
     let drawY = this.y + shiftY * (this.baseSize / sizes.large);
 
-    return abs(mx - drawX) < this.currentSize / 2 &&
+    return abs(mx - drawX) < this.currWidth / 2 &&
            abs(my - drawY) < this.currentSize / 2;
   }
 
@@ -178,16 +254,25 @@ function setup() {
 
   computeEdgeTargets(squares.length - 1);
 
+  if (gridCols > squares.length) { gridCols = squares.length; } else {gridCols -= 1;}
+
+  console.log(gridCols);
+  gridBox = new GridBox([squares[0].x, squares[0].y], 
+    [squares[gridCols].x, squares[gridCols].y], 
+    [squares[gridCols].x, squares[squares.length - 1].y], 
+    [squares[0].x, squares[squares.length - 1].y])
+
 }
 
 function draw() {
 
   background(backgroundColor);
-
+  gridBox.update(selectedIndex);
+  gridBox.display();
   // update all squares
   for (let s of squares) {
     s.update(selectedIndex);
-    s.display();
+    s.display(selectedIndex);
   }
   
 }
