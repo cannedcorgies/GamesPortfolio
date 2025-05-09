@@ -1,15 +1,4 @@
 { "squares": [
-    { "name": "A", "size": "small", "image": "images/sheep.gif", "text": "hello" },
-    { "name": "B", "size": "medium", "image": "images/sheep.gif", "text": "whaddup" },
-    { "name": "C", "size": "large", "image": "images/sheep.gif", "text": "ass" },
-    { "name": "D", "size": "small", "image": "images/sheep.gif", "text": "ARHHHHHHH" },
-    { "name": "E", "size": "small", "image": "images/sheep.gif", "text": "..." },
-    { "name": "F", "size": "medium", "image": "images/sheep.gif", "text": "sorry" },
-    { "name": "A", "size": "small", "image": "images/sheep.gif", "text": "pardon" },
-    { "name": "B", "size": "medium", "image": "images/sheep.gif", "text": "whoop" },
-    { "name": "C", "size": "large", "image": "images/sheep.gif", "text": "yes" },
-    { "name": "D", "size": "small", "image": "images/sheep.gif", "text": "alright" },
-    { "name": "E", "size": "small", "image": "images/sheep.gif", "text": "this is" },
-    { "name": "F", "size": "medium", "image": "images/sheep.gif", "text": "tedious" }
+    { "name": "A", "size": "small", "image": "images/sheep.gif", "color": [255, 0, 0], "link": "https://cannedcorgies.itch.io/pixel-rain", "text": "You're a part time lover and a full time friend. The monkey on your back is the latest trend. I don't see what anyone can see. In anyone else but you" }
   ]
 }

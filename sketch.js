@@ -1,5 +1,5 @@
 let squares = [];
-let gridCols = 8;
+let gridCols = 1;
 let gridSpacing = 60;
 let sizes = {
   small: 30,
@@ -34,6 +34,11 @@ let textBoxLerpSpeed = 0.075;
 let textBoxOffsetX = 100;
 let textBoxOffsetY = 50;
 let textBoxMargin = 20;
+let font = "Roboto";
+let size_text = 16;
+
+let itchImage = "images/sheep.gif";
+let itchBox;
 
 function preload() {
 
@@ -50,6 +55,7 @@ function preload() {
 
   });
 }
+
 
 class TextBox {
 
@@ -78,7 +84,7 @@ class TextBox {
 
     if (this.activated) {
 
-      this.alpha = lerp(this.alpha, 200, textBoxLerpSpeed);
+      this.alpha = lerp(this.alpha, 255, textBoxLerpSpeed);
       this.x = lerp(this.x, width/2 - textBoxOffsetX, textBoxLerpSpeed);
 
     } else {
@@ -94,16 +100,52 @@ class TextBox {
 
     rectMode(CENTER);
     noStroke();
-    let c = color(this.color[0], this.color[1], this.color[2]);
+
+    let textW = this.width - textBoxMargin;
+    let textH = this.getWrappedTextHeight(this.text, textW);
+
+    // shadow
+    let c = color(0, 0, 0);
+    if (selectedIndex == null) { c.setAlpha(0); }
+    fill(c);
+    rect(this.x, this.y, this.width - textBoxMargin * 1.5, textH + textBoxMargin * 2);
+
+    // solid textbox
+    c = color(this.color[0], this.color[1], this.color[2]);
     c.setAlpha(this.alpha);
     fill(c);
-    rect(this.x, this.y, this.width, this.height);
+    rect(this.x, this.y, this.width - textBoxMargin * 1.5, textH);
 
+    // text
+    textSize(size_text);
+    textAlign(LEFT);
     c = color(255, 255, 255);
     c.setAlpha(this.alpha);
     fill(c);
-    text(this.text, this.x, this.y, this.width - textBoxMargin);
+    text(this.text, this.x + textBoxMargin * 1.5, this.y - textH / 2 + textLeading(), textW);
 
+  }
+
+  getWrappedTextHeight(txt, boxWidth) {
+    textSize(size_text);
+    textAlign(LEFT);
+    let words = txt.split(' ');
+    let lines = [];
+    let line = "";
+  
+    for (let i = 0; i < words.length; i++) {
+      let testLine = line + words[i] + ' ';
+      if (textWidth(testLine) > boxWidth && line !== '') {
+        lines.push(line);
+        line = words[i] + ' ';
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line); // add the last line
+  
+    let lineHeight = textLeading(); // or textAscent() + textDescent()
+    return lines.length * lineHeight;
   }
 
 }
@@ -170,7 +212,7 @@ class GridBox {
 
 class Square {
 
-  constructor(index, x, y, baseSize, name, text, imagePath) {
+  constructor(index, x, y, baseSize, name, text, imagePath, color, link) {
 
     this.index = index;             // positioning chronologically
     this.x = x;                     // running x position
@@ -184,9 +226,11 @@ class Square {
     this.name = name;
     this.currWidth = baseSize;
     this.text = text;
+    this.color = color;
 
     this.img = imageDict[imagePath];
     this.widthMultiplier = this.img.width/this.img.height;
+    this.link = link;
 
   }
 
@@ -289,6 +333,70 @@ class Square {
   }
 }
 
+class ItchLink extends Square {
+
+  constructor(index, x, y, baseSize, name, text, imagePath, color, link) {
+
+    super(index, x, y, baseSize, name, text, imagePath, color, link);
+    this.y = height/2;
+
+  }
+
+  update() {
+
+    if (selectedIndex != null) { fill(0); }
+    rect(this.x, this.y, this.currentSize + textBoxMargin, this.currentSize + textBoxMargin);
+
+    this.x = gridBox.currTopRight[0];
+    // lean towards map
+    // remap mouse position
+    let shiftX = map(mouseX, 0, width, -10, 10);
+    let shiftY = map(mouseY, 0, height, -10, 10);
+    if (selectedIndex == this.index) { shiftX = shiftY = 0; }
+      // recalculate position based on mouse pos
+    let drawX = this.x + shiftX * (this.baseSize / sizes.large);  // account for largest size possible
+    let drawY = this.y + shiftY * (this.baseSize / sizes.large);
+
+    // hover detection
+    let hovered = abs(mouseX - drawX) < this.currWidth / 2 &&
+                  abs(mouseY - drawY) < this.currentSize / 2;
+
+    console.log(hovered);
+
+    // smooth size lerping
+    let targetSize = hovered ? this.baseSize * selectStretch : this.baseSize;
+    console.log(targetSize);
+    this.currentSize = lerp(this.currentSize, targetSize, lerpSpeed);
+    if (selectedIndex == null) { this.currentSize = 1; }
+
+    this.currWidth = lerp(this.currWidth, this.currentSize, lerpSpeed);
+
+    // center crop the image to fill square without squeezing
+    let cropSize = min(this.img.width, this.img.height);
+    let xOffset = (this.img.width - cropSize) / 2;
+    let yOffset = (this.img.height - cropSize) / 2;
+    
+    // create a square crop of the original image
+    let cropped = this.img.get(xOffset, yOffset, cropSize, cropSize);
+    cropped.resize(this.currentSize * this.widthMultiplier, this.currentSize);
+
+    // create a mask (rounded square)
+    let mask = createGraphics(this.currentSize, this.currentSize);
+    mask.noStroke();
+    mask.fill(255);
+    mask.rect(0, 0, this.currentSize, this.currentSize, this.currentSize * 0.2); // Rounded corners (30% radius)
+
+    // apply the mask
+    cropped.mask(mask);
+
+    imageMode(CENTER);
+
+    image(cropped, this.x, this.y, this.currentSize, this.currentSize);
+
+  }
+
+}
+
 function setup() {
 
   createCanvas(windowWidth, windowHeight);
@@ -314,7 +422,7 @@ function setup() {
     let baseSize = sizes[data[i].size];   // fetch the appropriate size
 
     console.log(data[i].text);
-    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image));
+    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link));
 
   }
 
@@ -329,6 +437,8 @@ function setup() {
     [squares[0].x, squares[squares.length - 1].y])
 
   textBox = new TextBox("hello blah blah blah", 500, 200);
+
+  itchBox = new ItchLink(0, 400, 400, sizes.medium, itchImage, "uduaifgdka", itchImage, backgroundColor, squares[0].link);
 
 }
 
@@ -362,6 +472,8 @@ function draw() {
     textBox.activated = false;
 
   }
+
+  itchBox.update();
   
 }
 
@@ -388,9 +500,18 @@ function mousePressed() {
       selectedIndex = s.index;
       textBox.reset();
       textBox.text = s.text;
+      textBox.color = s.color;
       return;
     }
   }
+
+  // check itch
+  if (itchBox.isClicked && selectedIndex != null) {
+
+    window.open(squares[selectedIndex].link);
+
+  }
+
 }
 
 
