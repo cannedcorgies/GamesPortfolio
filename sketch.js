@@ -37,7 +37,7 @@ let textBoxMargin = 20;
 let font = "Roboto";
 let size_text = 16;
 
-let itchImage = "images/sheep.gif";
+let itchImage = "images/itch-io-icon.png";
 let itchBox;
 
 function preload() {
@@ -339,6 +339,7 @@ class ItchLink extends Square {
 
     super(index, x, y, baseSize, name, text, imagePath, color, link);
     this.y = height/2;
+    this.img = loadImage(itchImage);
 
   }
 
@@ -438,7 +439,7 @@ function setup() {
 
   textBox = new TextBox("hello blah blah blah", 500, 200);
 
-  itchBox = new ItchLink(0, 400, 400, sizes.medium, itchImage, "uduaifgdka", itchImage, backgroundColor, squares[0].link);
+  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", data[0].image, backgroundColor, squares[0].link);
 
 }
 
