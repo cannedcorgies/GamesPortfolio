@@ -1,5 +1,5 @@
 let squares = [];
-let gridCols = 1;
+let gridCols = 2;
 let gridSpacing = 60;
 let sizes = {
   small: 30,

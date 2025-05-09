@@ -1,4 +1,5 @@
 { "squares": [
-    { "name": "A", "size": "small", "image": "images/sheep.gif", "color": [255, 0, 0], "link": "https://cannedcorgies.itch.io/pixel-rain", "text": "You're a part time lover and a full time friend. The monkey on your back is the latest trend. I don't see what anyone can see. In anyone else but you" }
+    { "name": "A", "size": "small", "image": "images/sheep.gif", "color": [255, 0, 0], "link": "https://cannedcorgies.itch.io/pixel-rain", "text": "You're a part time lover and a full time friend. The monkey on your back is the latest trend. I don't see what anyone can see. In anyone else but you" },
+    { "name": "A", "size": "small", "image": "images/sheep.gif", "color": [255, 0, 0], "link": "https://cannedcorgies.itch.io/presentiment-prototype", "text": "vorp" }
   ]
 }
