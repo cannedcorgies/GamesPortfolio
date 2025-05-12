@@ -1,5 +1,5 @@
 let squares = [];
-let gridCols = 2;
+let gridCols = 4;
 let gridSpacing = 60;
 let sizes = {
   small: 30,
@@ -15,9 +15,9 @@ let edgePositions = [];     // locations around the screen
 
 let jsonData;   // data for the squares
 
-let backgroundColor = 0;
+let backgroundColor = 125;
 
-let margin = 100;        // space from edge
+let margin = 50;        // space from edge
 let cornerOffset = 30;  // to prevent overlap
 
 let imageDict = {};  // store loaded gifs to avoid reloading
@@ -35,7 +35,9 @@ let textBoxOffsetX = 100;
 let textBoxOffsetY = 50;
 let textBoxMargin = 20;
 let font = "Roboto";
-let size_text = 16;
+let size_text = 14;
+let titleSize = 34;
+let subtitleSize = 25;
 
 let itchImage = "images/itch-io-icon.png";
 let itchBox;
@@ -71,6 +73,9 @@ class TextBox {
     this.color = color;
     this.alpha = 0;
 
+    this.title = "sample";
+    this.subtitle = "sample subtitle";
+
   }
 
   reset() {
@@ -98,31 +103,58 @@ class TextBox {
 
   display() {
 
-    rectMode(CENTER);
+    rectMode(LEFT);
     noStroke();
 
     let textW = this.width - textBoxMargin;
     let textH = this.getWrappedTextHeight(this.text, textW);
 
     // shadow
-    let c = color(0, 0, 0);
+    let c = color(backgroundColor);
     if (selectedIndex == null) { c.setAlpha(0); }
     fill(c);
-    rect(this.x, this.y, this.width - textBoxMargin * 1.5, textH + textBoxMargin * 2);
+    rect(this.x, this.y + textBoxMargin, textW + textBoxMargin * 2, textH * 2);
 
+    rectMode(LEFT);
     // solid textbox
+    rect(this.x + textBoxMargin * 1.5, this.y - textH / 4 + textLeading(), textW, textH);
     c = color(this.color[0], this.color[1], this.color[2]);
     c.setAlpha(this.alpha);
     fill(c);
-    rect(this.x, this.y, this.width - textBoxMargin * 1.5, textH);
+    rect(this.x, this.y + textBoxMargin, textW, textH * 1.5);
 
+    rectMode(CENTER);
     // text
+      // small text
     textSize(size_text);
     textAlign(LEFT);
     c = color(255, 255, 255);
     c.setAlpha(this.alpha);
     fill(c);
     text(this.text, this.x + textBoxMargin * 1.5, this.y - textH / 2 + textLeading(), textW);
+
+      // title
+    textSize(titleSize);
+    var titleX = gridBox.currTopRight[0] + textBoxMargin; 
+    var titleY = 0;
+    if (selectedIndex !== null) { 
+      titleY = squares[selectedIndex].y + 20;
+    }
+    text(this.title, titleX, titleY);
+
+      // subtitle
+    textSize(subtitleSize);
+    var subX = this.x - textBoxMargin * 10;
+    var subY = this.y - (textH/2 + textBoxMargin/1.5);
+    c = color(backgroundColor);
+    if (selectedIndex == null) { c.setAlpha(0); }
+    fill(c);
+    //rect(subX, subY, this.width - textBoxMargin * 1.5, subtitleSize * 2);
+
+    c = color(255, 255, 255);
+    c.setAlpha(this.alpha);
+    fill(c);
+    text(this.subtitle, subX, subY);
 
   }
 
@@ -212,7 +244,7 @@ class GridBox {
 
 class Square {
 
-  constructor(index, x, y, baseSize, name, text, imagePath, color, link) {
+  constructor(index, x, y, baseSize, name, text, imagePath, color, link, subtitle) {
 
     this.index = index;             // positioning chronologically
     this.x = x;                     // running x position
@@ -227,6 +259,7 @@ class Square {
     this.currWidth = baseSize;
     this.text = text;
     this.color = color;
+    this.subtitle = subtitle;
 
     this.img = imageDict[imagePath];
     this.widthMultiplier = this.img.width/this.img.height;
@@ -255,6 +288,7 @@ class Square {
         }
 
       }
+
     }
 
     // lerp to position
@@ -335,7 +369,7 @@ class Square {
 
 class ItchLink extends Square {
 
-  constructor(index, x, y, baseSize, name, text, imagePath, color, link) {
+  constructor(index, x, y, baseSize, name, text, imagePath, color, link, subtitle) {
 
     super(index, x, y, baseSize, name, text, imagePath, color, link);
     this.y = height/2;
@@ -345,7 +379,7 @@ class ItchLink extends Square {
 
   update() {
 
-    if (selectedIndex != null) { fill(0); }
+    if (selectedIndex != null) { fill(backgroundColor); }
     rect(this.x, this.y, this.currentSize + textBoxMargin, this.currentSize + textBoxMargin);
 
     this.x = gridBox.currTopRight[0];
@@ -362,11 +396,8 @@ class ItchLink extends Square {
     let hovered = abs(mouseX - drawX) < this.currWidth / 2 &&
                   abs(mouseY - drawY) < this.currentSize / 2;
 
-    console.log(hovered);
-
     // smooth size lerping
     let targetSize = hovered ? this.baseSize * selectStretch : this.baseSize;
-    console.log(targetSize);
     this.currentSize = lerp(this.currentSize, targetSize, lerpSpeed);
     if (selectedIndex == null) { this.currentSize = 1; }
 
@@ -384,7 +415,7 @@ class ItchLink extends Square {
     // create a mask (rounded square)
     let mask = createGraphics(this.currentSize, this.currentSize);
     mask.noStroke();
-    mask.fill(255);
+    mask.fill(backgroundColor);
     mask.rect(0, 0, this.currentSize, this.currentSize, this.currentSize * 0.2); // Rounded corners (30% radius)
 
     // apply the mask
@@ -423,7 +454,7 @@ function setup() {
     let baseSize = sizes[data[i].size];   // fetch the appropriate size
 
     console.log(data[i].text);
-    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link));
+    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link, data[i].subtitle));
 
   }
 
@@ -439,7 +470,7 @@ function setup() {
 
   textBox = new TextBox("hello blah blah blah", 500, 200);
 
-  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", data[0].image, backgroundColor, squares[0].link);
+  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", "images/sheep.gif", backgroundColor, squares[0].link, "the awesome");
 
 }
 
@@ -501,13 +532,15 @@ function mousePressed() {
       selectedIndex = s.index;
       textBox.reset();
       textBox.text = s.text;
+      textBox.title = s.name;
+      textBox.subtitle = s.subtitle;
       textBox.color = s.color;
       return;
     }
   }
 
   // check itch
-  if (itchBox.isClicked && selectedIndex != null) {
+  if (itchBox.isClicked(mouseX, mouseY) && selectedIndex != null) {
 
     window.open(squares[selectedIndex].link);
 
