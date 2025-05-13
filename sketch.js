@@ -42,6 +42,9 @@ let subtitleSize = 25;
 let itchImage = "images/itch-io-icon.png";
 let itchBox;
 
+let myVideo;
+let videoSize = 350;
+
 function preload() {
 
   jsonData = loadJSON("squaresData.json", () => {
@@ -50,12 +53,18 @@ function preload() {
     for (let obj of jsonData.squares) {
 
       if (!imageDict[obj.image]) {
+        console.log("an image...");
         imageDict[obj.image] = loadImage(obj.image);
       }
 
     }
 
+    console.log("buffering...");
+
   });
+
+  console.log("done!");
+
 }
 
 
@@ -244,7 +253,7 @@ class GridBox {
 
 class Square {
 
-  constructor(index, x, y, baseSize, name, text, imagePath, color, link, subtitle) {
+  constructor(index, x, y, baseSize, name, text, imagePath, color, link, subtitle, video) {
 
     this.index = index;             // positioning chronologically
     this.x = x;                     // running x position
@@ -264,6 +273,7 @@ class Square {
     this.img = imageDict[imagePath];
     this.widthMultiplier = this.img.width/this.img.height;
     this.link = link;
+    this.video = video;
 
   }
 
@@ -276,8 +286,17 @@ class Square {
       // if this square was selected
       if (this.index === selectedIndex) {
 
-        this.targetX = width / 2;
-        this.targetY = height / 2 + centerOffset_y;
+        if (this.video == "") {
+
+          this.targetX = width / 2;
+          this.targetY = height / 2 + centerOffset_y;
+
+        } else {
+
+          this.targetX = width / 2 + videoSize / 2 + this.currWidth;
+          this.targetY = height / 2 + centerOffset_y;
+
+        }
 
       } else {  // else, lerp to edge
         
@@ -315,12 +334,14 @@ class Square {
 
     // smooth size lerping
     let targetSize = hovered ? this.baseSize * selectStretch : this.baseSize;
-    if (selectedIndex === this.index) { targetSize = hovered ? openSize * selectStretch : openSize; }
+    if (selectedIndex === this.index && this.video == "") { targetSize = hovered ? openSize * selectStretch : openSize; }
     this.currentSize = lerp(this.currentSize, targetSize, lerpSpeed);
 
-    if (selectedIndex === this.index) { this.currWidth = lerp(this.currWidth, this.currentSize * this.widthMultiplier, lerpSpeed);}
+    
+    if (selectedIndex === this.index && this.video == "") { this.currWidth = lerp(this.currWidth, this.currentSize * this.widthMultiplier, lerpSpeed);}
     else { this.currWidth = lerp(this.currWidth, this.currentSize, lerpSpeed); }
 
+    /*
     // center crop the image to fill square without squeezing
     let cropSize = min(this.img.width, this.img.height);
     let xOffset = (this.img.width - cropSize) / 2;
@@ -328,8 +349,9 @@ class Square {
 
     // create a square crop of the original image
     let cropped = this.img.get(xOffset, yOffset, cropSize, cropSize);
+      // grow
     if (selectedIndex === this.index) { cropped = this.img.get((this.img.width - cropSize * this.widthMultiplier) / 2, yOffset, cropSize * this.widthMultiplier, cropSize); }
-    cropped.setFrame(this.img.getCurrentFrame());
+    if (!hovered && selectedIndex !== this.index) { cropped.setFrame(this.img.getCurrentFrame()); }    // source image
     cropped.resize(this.currentSize * this.widthMultiplier, this.currentSize);
 
     // create a mask (rounded square)
@@ -340,11 +362,10 @@ class Square {
 
     // apply the mask
     cropped.mask(mask);
-
+    */
     imageMode(CENTER);
-    if (hovered || selectedIndex === this.index) { image(this.img, -1000, -1000, 0, 0); }    // source image
     //if (selectedIndex === this.index)
-    image(cropped, drawX, drawY, this.currWidth, this.currentSize);
+    image(this.img, drawX, drawY, this.currWidth, this.currentSize);
 
   }
 
@@ -431,8 +452,12 @@ class ItchLink extends Square {
 
 function setup() {
 
+  frameRate(60);
+
   createCanvas(windowWidth, windowHeight);
   noStroke();
+
+  console.log("hello?");
 
   let data = jsonData.squares; // assuming it's an array at the root level ( {squares: [__, __, __]})
 
@@ -454,7 +479,7 @@ function setup() {
     let baseSize = sizes[data[i].size];   // fetch the appropriate size
 
     console.log(data[i].text);
-    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link, data[i].subtitle));
+    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link, data[i].subtitle, data[i].video));
 
   }
 
@@ -470,7 +495,16 @@ function setup() {
 
   textBox = new TextBox("hello blah blah blah", 500, 200);
 
-  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", "images/sheep.gif", backgroundColor, squares[0].link, "the awesome");
+  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", "images/sheep.gif", backgroundColor, squares[0].link, "the awesome", "");
+
+  // show video
+      //if (s.video != "") {
+  myVideo = createDiv('<iframe width="640" height="480" src="https://www.youtube.com/embed/' + "-lEjP3GOxkA?si=FX-VAdZIR2_KNNd6" + '" frameborder="0" allow="accelerometer    encrypted-media  gyroscope  picture-in-picture   allow-modals allow-popups-to-escape-sandbox allow-presentation" ></iframe>');
+  myVideo.position(width / 2, height / 2);
+  myVideo.center();
+  myVideo.hide();
+
+      //}
 
 }
 
@@ -516,14 +550,15 @@ function mousePressed() {
 
     if (s.isClicked(mouseX, mouseY)) {
 
+      
       // if re-clicked the same square, reset all squares to resting states
       if (selectedIndex === s.index) {
         selectedIndex = null;
-
+        
         for (let sq of squares) {
           sq.resetPosition();
         }
-
+        myVideo.hide();
         return;
 
       }
@@ -535,8 +570,25 @@ function mousePressed() {
       textBox.title = s.name;
       textBox.subtitle = s.subtitle;
       textBox.color = s.color;
+
+      if (s.video != "") {
+        
+        myVideo = createDiv('<iframe width="' + videoSize + '" height="' + (videoSize * 0.75) + '" src="https://www.youtube.com/embed/' + s.video + '" frameborder="0" allow="accelerometer    encrypted-media  gyroscope  picture-in-picture   allow-modals allow-popups-to-escape-sandbox allow-presentation" ></iframe>');
+        myVideo.center();
+        let currentPos = myVideo.position(); // returns a p5.Vector
+        myVideo.position(currentPos.x, currentPos.y - 150);
+        myVideo.show();
+
+      } else {
+
+        myVideo.remove();
+        myVideo.hide();
+
+      }
       return;
+
     }
+    
   }
 
   // check itch
