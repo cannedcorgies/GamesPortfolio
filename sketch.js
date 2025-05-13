@@ -581,8 +581,8 @@ function mousePressed() {
 
       } else {
 
-        myVideo.remove();
         myVideo.hide();
+        myVideo.remove();
 
       }
       return;
