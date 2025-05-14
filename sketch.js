@@ -39,15 +39,30 @@ let font = "Roboto";
 let size_text = 14;
 let titleSize = 34;
 let subtitleSize = 20;
+let dateSize = 20;
 
 let itchImage = "images/itch-io-icon.png";
+let linkedInImage = "images/linkedIn.png";
+let linktreeImage = "images/linktree.png";
 let itchBox;
 
 let myVideo;
 let videoSize = 200;
 
+let linkedInLink;
+let itchLink;
+let linkTreeLink;
+
+let linkSize = 35;
+
 function preload() {
 
+  /*createCanvas(windowWidth, windowHeight);
+  fill(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
+  textAlign(CENTER, CENTER);
+  textSize(24);
+  text("loading games, please wait... may take a minute", width / 2, height / 2);*/
+  
   jsonData = loadJSON("squaresData.json", () => {
 
     // wait for json to load...
@@ -68,6 +83,37 @@ function preload() {
 
 }
 
+class Link {
+
+  constructor(x, y, link, image){
+
+    this.x = x;
+    this.y = y;
+    this.link = link;
+    this.image = loadImage(image);
+    this.size = linkSize;
+
+  }
+
+  display(){
+
+    imageMode(CENTER);
+    image(this.image, this.x, this.y, this.size, this.size);
+
+  }
+
+  // mouse click DETECTION
+  isClicked(mx, my) {
+
+    let shiftX = map(mx, 0, width, -10, 10);
+    let shiftY = map(my, 0, height, -10, 10);
+    let drawX = this.x + shiftX;
+    let drawY = this.y + shiftY;
+
+    if ( abs(mx - drawX) < this.size / 2 && abs(my - drawY) < this.size / 2 ) { window.open(this.link); }
+  }
+
+}
 
 class TextBox {
 
@@ -85,6 +131,7 @@ class TextBox {
 
     this.title = "sample";
     this.subtitle = "sample subtitle";
+    this.date = "June 2024";
 
   }
 
@@ -152,6 +199,8 @@ class TextBox {
       titleY = squares[selectedIndex].y + 20;
     }
     text(this.title, titleX, titleY);
+    textSize(dateSize);
+    text(this.date, titleX, titleY + titleSize);
 
       // subtitle
     textSize(subtitleSize);
@@ -255,7 +304,7 @@ class GridBox {
 
 class Square {
 
-  constructor(index, x, y, baseSize, name, text, imagePath, color, link, subtitle, video) {
+  constructor(index, x, y, baseSize, name, text, imagePath, color, link, subtitle, video, date = '') {
 
     this.index = index;             // positioning chronologically
     this.x = x;                     // running x position
@@ -271,6 +320,7 @@ class Square {
     this.text = text;
     this.color = color;
     this.subtitle = subtitle;
+    this.date = date;
 
     this.img = imageDict[imagePath];
     this.widthMultiplier = this.img.width/this.img.height;
@@ -481,7 +531,7 @@ function setup() {
     let baseSize = sizes[data[i].size];   // fetch the appropriate size
 
     console.log(data[i].text);
-    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link, data[i].subtitle, data[i].video));
+    squares.push(new Square(i, x, y, baseSize, data[i].name, data[i].text, data[i].image, data[i].color, data[i].link, data[i].subtitle, data[i].video, data[i].date));
 
   }
 
@@ -508,6 +558,10 @@ function setup() {
 
       //}
   backgroundColor_variable = color(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
+
+  linkedInLink = new Link(width/2 - linkSize * 2, height - linkSize * 2, "https://www.linkedin.com/in/alcazarfjose/", linkedInImage);
+  linkTreeLink = new Link(width/2, height - linkSize * 2, "https://linktr.ee/falcazar", linktreeImage);
+  itchLink = new Link(width/2 + linkSize * 2, height - linkSize * 2, "https://cannedcorgies.itch.io/", itchImage);
 
 }
 
@@ -543,6 +597,10 @@ function draw() {
   }
 
   itchBox.update();
+
+  linkTreeLink.display();
+  linkedInLink.display();
+  itchLink.display();
   
 }
 
@@ -574,10 +632,11 @@ function mousePressed() {
       textBox.title = s.name;
       textBox.subtitle = s.subtitle;
       textBox.color = s.color;
+      textBox.date = s.date;
 
       if (s.video != "") {
         
-        myVideo = createDiv('<iframe width="' + videoSize + '" height="' + (videoSize * 0.75) + '" src="https://www.youtube.com/embed/' + s.video + '" frameborder="0" allow="accelerometer    encrypted-media  gyroscope  picture-in-picture   allow-modals allow-popups-to-escape-sandbox allow-presentation" ></iframe>');
+        myVideo = createDiv('<iframe width="' + videoSize + '" height="' + (videoSize * 0.75) + '" src="https://www.youtube.com/embed/' + s.video + '" frameborder="0" allow="accelerometer    encrypted-media  gyroscope  picture-in-picture   allow-modals allow-popups-to-escape-sandbox allow-presentation " allowfullscreen></iframe>');
         myVideo.center();
         let currentPos = myVideo.position(); // returns a p5.Vector
         myVideo.position(currentPos.x, currentPos.y - 200);
@@ -601,6 +660,10 @@ function mousePressed() {
     window.open(squares[selectedIndex].link);
 
   }
+
+  linkTreeLink.isClicked(mouseX, mouseY);
+  linkedInLink.isClicked(mouseX, mouseY);
+  itchLink.isClicked(mouseX, mouseY);
 
 }
 
