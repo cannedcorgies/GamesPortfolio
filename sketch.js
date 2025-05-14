@@ -55,6 +55,9 @@ let linkTreeLink;
 
 let linkSize = 35;
 
+let filesToLoad;
+let filesLoaded;
+
 function preload() {
 
   /*createCanvas(windowWidth, windowHeight);
@@ -65,12 +68,21 @@ function preload() {
   
   jsonData = loadJSON("squaresData.json", () => {
 
+    const loadingElement = document.getElementById('p5_loading');
+    filesToLoad = jsonData.squares.length;
+    filesLoaded = 0;
     // wait for json to load...
     for (let obj of jsonData.squares) {
 
       if (!imageDict[obj.image]) {
         console.log("an image...");
-        imageDict[obj.image] = loadImage(obj.image);
+        imageDict[obj.image] = loadImage(obj.image, () => {
+
+          filesLoaded++;
+          loadingElement.innerText = `Loading... ` + Math.floor(filesLoaded/filesToLoad * 100) + "%";
+          console.log("loaded");
+
+        });
       }
 
     }
