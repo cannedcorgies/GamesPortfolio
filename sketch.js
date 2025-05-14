@@ -15,7 +15,8 @@ let edgePositions = [];     // locations around the screen
 
 let jsonData;   // data for the squares
 
-let backgroundColor = 125;
+let backgroundColor = [1, 1, 26];
+let backgroundColor_variable;
 
 let margin = 50;        // space from edge
 let cornerOffset = 30;  // to prevent overlap
@@ -37,13 +38,13 @@ let textBoxMargin = 20;
 let font = "Roboto";
 let size_text = 14;
 let titleSize = 34;
-let subtitleSize = 25;
+let subtitleSize = 20;
 
 let itchImage = "images/itch-io-icon.png";
 let itchBox;
 
 let myVideo;
-let videoSize = 350;
+let videoSize = 200;
 
 function preload() {
 
@@ -119,18 +120,19 @@ class TextBox {
     let textH = this.getWrappedTextHeight(this.text, textW);
 
     // shadow
-    let c = color(backgroundColor);
+    rectMode(LEFT);
+    let c = color(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
     if (selectedIndex == null) { c.setAlpha(0); }
     fill(c);
-    rect(this.x, this.y + textBoxMargin, textW + textBoxMargin * 2, textH * 2);
+    rect(this.x, this.y + textBoxMargin, textW + textBoxMargin * 4, textH + textBoxMargin * 6);
 
     rectMode(LEFT);
     // solid textbox
-    rect(this.x + textBoxMargin * 1.5, this.y - textH / 4 + textLeading(), textW, textH);
+    //rect(this.x + textBoxMargin * 1.5, this.y - textH / 4 + textLeading(), textW, textH);
     c = color(this.color[0], this.color[1], this.color[2]);
     c.setAlpha(this.alpha);
     fill(c);
-    rect(this.x, this.y + textBoxMargin, textW, textH * 1.5);
+    rect(this.x, this.y + textBoxMargin, textW, textH + textBoxMargin * 2);
 
     rectMode(CENTER);
     // text
@@ -154,8 +156,8 @@ class TextBox {
       // subtitle
     textSize(subtitleSize);
     var subX = this.x - textBoxMargin * 10;
-    var subY = this.y - (textH/2 + textBoxMargin/1.5);
-    c = color(backgroundColor);
+    var subY = this.y - (textH/2 + textBoxMargin/2);
+    c = color(backgroundColor[0], backgroundColor[1], backgroundColor[2]);;
     if (selectedIndex == null) { c.setAlpha(0); }
     fill(c);
     //rect(subX, subY, this.width - textBoxMargin * 1.5, subtitleSize * 2);
@@ -400,7 +402,7 @@ class ItchLink extends Square {
 
   update() {
 
-    if (selectedIndex != null) { fill(backgroundColor); }
+    if (selectedIndex != null) { fill(backgroundColor[0], backgroundColor[1], backgroundColor[2]); }
     rect(this.x, this.y, this.currentSize + textBoxMargin, this.currentSize + textBoxMargin);
 
     this.x = gridBox.currTopRight[0];
@@ -436,7 +438,7 @@ class ItchLink extends Square {
     // create a mask (rounded square)
     let mask = createGraphics(this.currentSize, this.currentSize);
     mask.noStroke();
-    mask.fill(backgroundColor);
+    mask.fill(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
     mask.rect(0, 0, this.currentSize, this.currentSize, this.currentSize * 0.2); // Rounded corners (30% radius)
 
     // apply the mask
@@ -495,7 +497,7 @@ function setup() {
 
   textBox = new TextBox("hello blah blah blah", 500, 200);
 
-  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", "images/sheep.gif", backgroundColor, squares[0].link, "the awesome", "");
+  itchBox = new ItchLink(0, 400, 400, sizes.medium, "itch button", "uduaifgdka", "images/sheep.gif", backgroundColor_variable, squares[0].link, "the awesome", "");
 
   // show video
       //if (s.video != "") {
@@ -505,12 +507,13 @@ function setup() {
   myVideo.hide();
 
       //}
+  backgroundColor_variable = color(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
 
 }
 
 function draw() {
 
-  background(backgroundColor);
+  background(backgroundColor[0], backgroundColor[1], backgroundColor[2]);
   gridBox.update(selectedIndex);
   gridBox.display();
   // update all squares
@@ -559,6 +562,7 @@ function mousePressed() {
           sq.resetPosition();
         }
         myVideo.hide();
+        myVideo.remove();
         return;
 
       }
@@ -576,7 +580,7 @@ function mousePressed() {
         myVideo = createDiv('<iframe width="' + videoSize + '" height="' + (videoSize * 0.75) + '" src="https://www.youtube.com/embed/' + s.video + '" frameborder="0" allow="accelerometer    encrypted-media  gyroscope  picture-in-picture   allow-modals allow-popups-to-escape-sandbox allow-presentation" ></iframe>');
         myVideo.center();
         let currentPos = myVideo.position(); // returns a p5.Vector
-        myVideo.position(currentPos.x, currentPos.y - 150);
+        myVideo.position(currentPos.x, currentPos.y - 200);
         myVideo.show();
 
       } else {
